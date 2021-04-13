@@ -50,20 +50,6 @@
 // });
 
 // // Output message to DOM
-// function outputMessage(message) {
-//   const div = document.createElement('div');
-//   div.classList.add('message');
-//   const p = document.createElement('p');
-//   p.classList.add('meta');
-//   p.innerText = message.username;
-//   p.innerHTML += `<span>${message.time}</span>`;
-//   div.appendChild(p);
-//   const para = document.createElement('p');
-//   para.classList.add('text');
-//   para.innerText = message.text;
-//   div.appendChild(para);
-//   document.querySelector('.chat-messages').appendChild(div);
-// }
 
 // // Add room name to DOM
 // function outputRoomName(room) {
@@ -89,7 +75,44 @@
 //   }
 // });
 
+const mainForm = document.getElementById('chat-form');
+const chatMesaages = document.querySelector('.chat-messages');
+
 const socket = io();
-socket.on('message', message => {
-  console.log(message);
+
+const { username, room } = Qs.parse(location.search, {
+    ignoreQueryPrefix: true
 });
+
+socket.emit('joinChat', { username, room });
+
+socket.on('message', message => {
+    outputMessage(message);
+
+    chatMesaages.scrollTop = chatMesaages.scrollHeight;
+});
+
+mainForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const message = e.target.elements.msg.value;
+
+    socket.emit('chatMessage', message);
+    
+    e.target.elements.msg.value = '';
+    e.target.elements.msg.focus();
+});
+
+function outputMessage(message) {
+    const div = document.createElement('div');
+    div.classList.add('message');
+    div.innerHTML = `
+        <p class="meta">${message.username}
+            <span>${message.date}</span>
+        </p>
+        <p class="text">
+            ${message.text}
+        </p>
+    `;
+    document.querySelector('.chat-messages').appendChild(div);
+}
