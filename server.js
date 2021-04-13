@@ -26,13 +26,27 @@ io.on('connection', socket => {
         // Emit to user when connects (Just send to user that connected)
         socket.emit('message', formatMessage(botName, 'Welcome to chat!'));
 
+        // Send users and room info
+        io.to(user.room).emit('roomUsers', {
+            users: getUserRoom(user.room),
+            room: user.room
+        });
+
         // Brodcast when a user connects (send to all user exept that user connected)
         socket.broadcast.to(user.room).emit('message', formatMessage(botName, `${username} has joined the chat!`));
 
         // Brodcast when a user disconencts from chat
         socket.on('disconnect', () => {
             const user = userLeave(socket.id);
-            io.to(user.room).emit('message', formatMessage(botName, `${user.username} has left the chat`));
+
+            if (user) {
+                io.to(user.room).emit('message', formatMessage(botName, `${user.username} has left the chat`));
+                io.to(user.room).emit('roomUsers', {
+                    users: getUserRoom(user.room),
+                    room: user.room
+                });
+            }
+        
         });
     });
 
